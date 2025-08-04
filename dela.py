@@ -1,4 +1,4 @@
-# meta developer: @yourusername
+# meta developer: @tartaletkad
 from .. import loader, utils
 
 @loader.tds
