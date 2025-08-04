@@ -16,7 +16,7 @@ class GetLinkSmartMod(loader.Module):
         if reply:
             user = await reply.get_sender()
             link = f"tg://user?id={user.id}"
-            await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
+            await utils.answer(message, f"👤 ПРОФИЛЬ: {link}")
             return
 
         # Если аргумент — @username (начинается с @)
