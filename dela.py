@@ -1,44 +1,38 @@
 # meta developer: @yourusername
 from .. import loader, utils
-from telethon.tl.types import PeerUser
-from telethon.errors import UsernameNotOccupiedError
 
 @loader.tds
-class GetLinkMod(loader.Module):
-    """Выдает ссылку tg://user?id= по ID, юзернейму или реплаю"""
-    strings = {"name": "GetLink"}
+class GetLinkSmartMod(loader.Module):
+    """Умная генерация tg://user ссылки: реально — если ник/реплай, иначе — как есть"""
+
+    strings = {"name": "GetLinkSmart"}
 
     async def getlinkcmd(self, message):
-        """[реплай / ID / username] — Получить tg:// ссылку на профиль"""
+        """[реплай / @username / ID / текст] — tg://user:id..."""
         args = utils.get_args_raw(message)
         reply = await message.get_reply_message()
 
-        user = None
+        # Если реплай — пробуем получить Entity
+        if reply:
+            user = await reply.get_sender()
+            link = f"tg://user?id={user.id}"
+            await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
+            return
 
-        if reply:  # если реплай
-            user = await self._client.get_entity(reply.from_id)
-        elif args:  # если что-то передано в аргументах
+        # Если аргумент — @username (начинается с @)
+        if args and args.strip().startswith("@"):
             try:
-                if args.isdigit():
-                    user = await self._client.get_entity(int(args))
-                else:
-                    user = await self._client.get_entity(args)
-            except UsernameNotOccupiedError:
-                await utils.answer(message, "❌ Такого пользователя нет.")
-                return
+                user = await self._client.get_entity(args.strip())
+                link = f"tg://user?id={user.id}"
+                await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
             except Exception as e:
-                await utils.answer(message, f"❌ Ошибка: {e}")
-                return
-        else:
-            await utils.answer(message, "✍️ Укажи ID, ник, или ответь на сообщение.")
+                await utils.answer(message, f"❌ Не нашёл: {e}")
             return
 
-        user_id = getattr(user, "id", None)
-        if not user_id:
-            await utils.answer(message, "❌ Не удалось получить ID пользователя.")
+        # Всё остальное просто преобразуем в ссылку "как есть"
+        if args:
+            link = f"tg://user?id={args.strip()}"
+            await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
             return
 
-        link = f"tg://user?id={user_id}"
-        output = f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})"
-
-        await utils.answer(message, output)
+        await utils.answer(message, "✍️ Укажи @юзернейм, ответь на сообщение или введи ID/текст.")
