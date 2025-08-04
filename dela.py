@@ -24,7 +24,7 @@ class GetLinkSmartMod(loader.Module):
             try:
                 user = await self._client.get_entity(args.strip())
                 link = f"tg://user?id={user.id}"
-                await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
+                await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]{link}")
             except Exception as e:
                 await utils.answer(message, f"❌ Не нашёл: {e}")
             return
@@ -32,7 +32,7 @@ class GetLinkSmartMod(loader.Module):
         # Всё остальное просто преобразуем в ссылку "как есть"
         if args:
             link = f"tg://user?id={args.strip()}"
-            await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})")
+            await utils.answer(message, f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]{link}")
             return
 
         await utils.answer(message, "✍️ Укажи @юзернейм, ответь на сообщение или введи ID/текст.")
