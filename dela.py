@@ -1,43 +1,44 @@
 # meta developer: @yourusername
-from telethon.tl.types import PeerUser
 from .. import loader, utils
+from telethon.tl.types import PeerUser
+from telethon.errors import UsernameNotOccupiedError
 
 @loader.tds
 class GetLinkMod(loader.Module):
-    """Получает ссылку на Telegram-профиль по ID или реплаю"""
+    """Выдает ссылку tg://user?id= по ID, юзернейму или реплаю"""
     strings = {"name": "GetLink"}
 
     async def getlinkcmd(self, message):
-        """[реплай / ID / username] — Получить ссылку на профиль"""
+        """[реплай / ID / username] — Получить tg:// ссылку на профиль"""
         args = utils.get_args_raw(message)
         reply = await message.get_reply_message()
 
         user = None
 
-        if reply:
+        if reply:  # если реплай
             user = await self._client.get_entity(reply.from_id)
-        elif args:
+        elif args:  # если что-то передано в аргументах
             try:
-                entity = await self._client.get_entity(args)
-                user = entity
+                if args.isdigit():
+                    user = await self._client.get_entity(int(args))
+                else:
+                    user = await self._client.get_entity(args)
+            except UsernameNotOccupiedError:
+                await utils.answer(message, "❌ Такого пользователя нет.")
+                return
             except Exception as e:
-                await utils.answer(message, f"❌ Не удалось найти пользователя: {e}")
+                await utils.answer(message, f"❌ Ошибка: {e}")
                 return
         else:
-            await utils.answer(message, "👤 Укажи пользователя или сделай реплай")
+            await utils.answer(message, "✍️ Укажи ID, ник, или ответь на сообщение.")
             return
 
-        if not getattr(user, "id", None):
-            await utils.answer(message, "❌ Не могу получить ID пользователя")
+        user_id = getattr(user, "id", None)
+        if not user_id:
+            await utils.answer(message, "❌ Не удалось получить ID пользователя.")
             return
 
-        user_link = f"tg://user?id={user.id}"
-        username_link = (
-            f"https://t.me/{user.username}" if user.username else user_link
-        )
-
-        output = f"🆔 ID: `{user.id}`\n🔗 Ссылка: [{user_link}]({user_link})"
-        if user.username:
-            output += f"\n🌐 Паблик: [@{user.username}](https://t.me/{user.username})"
+        link = f"tg://user?id={user_id}"
+        output = f"👤 ПРОФИЛЬ: [ПРОФИЛЬ]({link})"
 
         await utils.answer(message, output)
